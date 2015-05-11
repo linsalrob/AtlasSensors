@@ -28,8 +28,8 @@ RTC_DS1307 rtc;
 
 // real time clock
 const int rtc_address = 0x68;
-// the atlas addresses
 
+// the atlas addresses
 int doProbe = 0x61;
 int orpProbe = 0x62;
 int phProbe = 0x63;
@@ -38,44 +38,47 @@ int ecProbe = 0x64;
 // variable of the file we will write to
 File outputFile;
 
-
 void setup() {
   Serial.begin(9600);
   //note that the micro serial connection is not quite the same as the uno
   //see http://arduino.cc/en/Guide/ArduinoLeonardoMicro
+  
   while (!Serial);
   Wire.begin();
+  
   // set the real time clock
   rtc.adjust(DateTime(__DATE__, __TIME__));
   rtc.begin();
+  
   if (!SD.begin(SS)) {
     Serial.println("SD card initialization failed!");
     return;
   }
   outputFile = SD.open("calibration.txt", FILE_WRITE);
-
+  
+  //instructions();
+  
+ /*#################################################################
+  #                                                                 #
+  #                                                                 #
+  #                  Atlas Probe Calibration                        #
+  #                                                                 #
+  #                      version 1.0                                #
+  #                                                                 #
+  #              By Rob Edwards and Jeff Sadural                    #
+  #                                                                 #
+  #                           2015                                  #
+  #                                                                 #
+  ###################################################################
+  
+  We have set the clock, now we need to calibrate the probes");
+  To begin, please do the following");
+                 1. Dip the DO probe (yellow) in H2O, leave for two minutes, and then take out and leave in the air.");
+                 2. Put the pH probe (red) in pH 7 solution. (You will also need pH4 and pH10 solutions");
+                 3. Place the ORP probe (blue) in calibration solution. We use 225mV solution. If you don't have that contact Rob or Jeff");
+                 4. Make sure the Conductivity probe (Green) is dry");
  
-  Serial.println("###################################################################");
-  Serial.println("#                                                                 #");
-  Serial.println("#                                                                 #");
-  Serial.println("#                  Atlas Probe Calibration                        #");
-  Serial.println("#                                                                 #");
-  Serial.println("#                      version 1.0                                #");
-  Serial.println("#                                                                 #");
-  Serial.println("#              By Rob Edwards and Jeff Sadural                    #");
-  Serial.println("#                                                                 #");
-  Serial.println("#                           2015                                  #");
-  Serial.println("#                                                                 #");
-  Serial.println("###################################################################");
-  Serial.println("\n\n");
-  Serial.println("We have set the clock, now we need to calibrate the probes");
-  Serial.println("To begin, please do the following");
-  Serial.println("               1. Dip the DO probe (yellow) in H2O, leave for two minutes, and then take out and leave in the air.");
-  Serial.println("               2. Put the pH probe (red) in pH 7 solution. (You will also need pH4 and pH10 solutions");
-  Serial.println("               3. Place the ORP probe (blue) in calibration solution. We use 225mV solution. If you don't have that contact Rob or Jeff");
-  Serial.println("               4. Make sure the Conductivity probe (Green) is dry");
-  Serial.println("\n\n");
-  Serial.println("Press return when you are ready");
+  "Press return when you are ready"*/
 
   String input = keyboard_input();
 
@@ -83,38 +86,34 @@ void setup() {
    *                      pH calibration                                      *
    ****************************************************************************/
 
-  Serial.println("\n\n\n\nGreat. We will start with the pH probe");
-  Serial.println("It takes about 4 seconds for the probe to adjust to each solution and be calibrated");
-  Serial.println("If the probe is in pH 7 solution, press return");
+  // We will start with the pH probe
+  // It takes about 4 seconds for the probe to adjust to each solution and be calibrated
+  // If the probe is in pH 7 solution, press return
  
   input = keyboard_input();
-  char mid[] = "cal,mid,7.00\0";
-  send_to_probe(phProbe, mid);
-  Serial.println("Calibrating the probe .... ");
-  delay(2000);
+  mid_cal();
+  delay(1400);
+  
   Serial.println("Move the probe to pH 4 solution and press return");
   input = keyboard_input();
-  Serial.println("Calibrating the probe .... ");
-  char low[] = "cal,low,4.00\0";
-  send_to_probe(phProbe, low);
-  delay(2000);
+  low_cal();
+  delay(1400);
+  
   Serial.println("Move the probe to pH 10 solution and press return");
   input = keyboard_input();
-  Serial.println("Calibrating the probe .... ");
-  char hi[] = "cal,high,10.00\0";
-  send_to_probe(phProbe, hi);
-  delay(2000);
-
-  Serial.println("The pH probe is calibrated.\n");
+  high_cal();
+  delay(1400);
+  
+  // Add probe calibration verification..
+  
+  Serial.println("The pH probe is calibrated, please press return.\n");
   
    /****************************************************************************
    *                      ORP calibration                                     *
    ****************************************************************************/
-  
-  Serial.println("Now we will calibrate the ORP probe\n");
-  Serial.println("Once the ORP probe (blue) is in the calibration solution press return");
+ 
   input = keyboard_input();
-  Serial.println("Calibrating the probe .... ");
+  Serial.println("Calibrating the ORP probe .... ");
   char orpc[] = "cal,225\0";
   send_to_probe(phProbe, orpc);
   delay(2000);
@@ -125,10 +124,11 @@ void setup() {
    *                      EC calibration                                       *
    ****************************************************************************/
  
-  Serial.println("Now we will calibrate the EC probe (green)\n");
-  Serial.println("If the probe is DRY press return\n");
+  // EC probe MUST be DRY!
+  
   input = keyboard_input();
-  Serial.println("Calibrating the probe .... ");
+  
+  Serial.println("Calibrating the EC probe .... ");
   char ecdry[] = "cal,dry\0";
   delay(2000);
   Serial.println("We need to get some calibration solutions here!! HELP");
@@ -144,8 +144,8 @@ void setup() {
   
   String date = rtc_time();
 
-  outputfile.println("Calibrated all probes and set the clock at " +  date);
-  outputfile.flush();
+  outputFile.println("Calibrated all probes and set the clock at " +  date);
+  outputFile.flush();
 
   Serial.println("All the probes are calibrated and the clock is set. Good luck");
   Serial.println("Please note, that most of these calibrations would be more accurate if we included the temperature of the solutions. We don't have that ... yet!");
@@ -165,8 +165,6 @@ String rtc_time() {
   return date;
 }
 
-
-
 String keyboard_input() {
   char received;
   String inputData;
@@ -182,12 +180,44 @@ String keyboard_input() {
   return inputData;
 }
 
-
-
-
 void send_to_probe(int probe_address, char message[]) {
   Wire.beginTransmission(probe_address); //call the circuit by its ID number.  
   Wire.write(message);        
   Wire.endTransmission();
+}
+
+void mid_cal(){
+  char mid[] = "cal,mid,7.00\0";
+  send_to_probe(phProbe, mid);
+  Serial.println("Calibrating the probe .... ");
+}
+
+void low_cal(){
+  Serial.println("Calibrating the probe .... ");
+  char low[] = "cal,low,4.00\0";
+  send_to_probe(phProbe, low);
+}
+
+void high_cal(){
+  Serial.println("Calibrating the probe .... ");
+  char hi[] = "cal,high,10.00\0";
+  send_to_probe(phProbe, hi);
+}
+
+// Function for calibrating with just the pH 7 solution...
+void singlePointCal(){
+  char resetSingle[] = "cal,clear\0";
+  send_to_probe(phProbe, resetSingle);
+  delay(1400);
+}
+
+// Returns the number of points calibrated
+// up to 3: mid, low, high (Probe is calibrated in this order!)
+int calStatus(){
+  char calStatus[] = "cal,?\0";
+  send_to_probe(phProbe, calStatus);
+  delay(300);
+  Wire.requestFrom(phProbe,20,1);
+  Serial.print(Wire.read());
 }
 

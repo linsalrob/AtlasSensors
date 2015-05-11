@@ -24,22 +24,27 @@ RTC_DS1307 rtc;
 
 // Define our addresses here (if necessary)
 const int rtc_address = 0x68;
-// the atlas addresses
+
+// ATLAS Probe Addresses
+// Prints in this order:
+// DO, ORP, pH, EC
 int atlas[] = {0x61, 0x62, 0x63, 0x64};
 int num_probes = 4;
 
 // our SS pin on the micro is at output 17
-//byte SS = 17;
+// byte SS = 17;
 File outputFile;
 
 void setup() {
   Serial.begin(9600);
   Wire.begin();
   rtc.begin();
+  
   if (!SD.begin(SS)) {
     Serial.println("SD card initialization failed!");
     return;
   }
+  
   outputFile = SD.open("output.txt", FILE_WRITE);
   Serial.flush();
   Serial.println(F("\n\nDate\tTime\tDO\tORP\tpH\tEC\tTDS\tSAL\tSG"));
@@ -52,20 +57,24 @@ void loop() {
   for (int i=0; i < num_probes; i++) {
     initiate_atlas(atlas[i]);
   }
-  unsigned long time = millis();
- String date = rtc_time(); 
- Serial.print(date);
- outputFile.print(date);
+ 
+   unsigned long time = millis();
+   String date = rtc_time(); 
+   Serial.print(date);
+   outputFile.print(date);
 
   while ((millis() - time) < 1500) {
     delay(1501-(millis() - time));
-  }
+    }
   
+  // Prints in this order:
+  // DO, ORP, pH, EC
   for (int i=0; i < num_probes; i++) {
     String res = read_atlas(atlas[i]);
     Serial.print("\t" + res);
     outputFile.print("\t" + res);
   }
+  
   Wire.flush();
 
   outputFile.println();
@@ -112,6 +121,7 @@ String RTC_time() {
     tempchar[i] = Wire.read(); // receive a byte as character 
     i++;
   } 
+  
   byte Second = tempchar[0];
   byte Minute = tempchar[1];
   byte Hour   = tempchar[2];
