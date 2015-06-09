@@ -6,7 +6,7 @@ void setup() {
   Serial.println(F("Resetting pH probe"));
   char reset_p[] = {'X', '\0'};
   Wire.beginTransmission(probe_address); //call the circuit by its ID number.  
- // Wire.write(reset_p);        //transmit the command that was sent through the serial port.
+  Wire.write(reset_p);        //transmit the command that was sent through the serial port.
   Wire.endTransmission();
   Serial.println("Complete");
 }
