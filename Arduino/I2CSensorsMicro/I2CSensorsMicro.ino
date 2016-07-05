@@ -104,6 +104,62 @@ String rtc_time() {
 }
 
 
+/*
+
+*********************************************************
+*                                                       *
+*               Real Time Clock                         *
+*                                                       *
+*********************************************************
+
+For the real time clock we are going to use the code available from gravitech http://site.gravitech.us/MicroResearch/I2C/I2C-RTC/I2C-RTC-Arduino.pde
+This just displays the time. At some point we need to have set the time!
+
+*/
+
+
+
+String RTC_time() {
+  char tempchar [7];
+  byte i = 0;
+  Wire.beginTransmission(rtc_address);
+  Wire.write(0);
+  Wire.endTransmission();
+
+  Wire.requestFrom(rtc_address, 7);
+  while(Wire.available()) {
+    tempchar[i] = Wire.read(); // receive a byte as character 
+    i++;
+  } 
+  
+  byte Second = tempchar[0];
+  byte Minute = tempchar[1];
+  byte Hour   = tempchar[2];
+  byte Day    = tempchar[3];
+  byte Date   = tempchar[4];
+  byte Month  = tempchar[5];
+  byte Year   = tempchar[6];
+
+  // Display time
+  String ret = "";
+  ret += String(Month, HEX) + "/" + String(Date, HEX) + "/";
+  if (Year<10)
+    ret += "0";
+  ret += String(Year, HEX) + "\t";
+  if (Hour < 10) 
+    ret += "0";
+  ret += String(Hour, HEX) + ":";
+  if (Minute < 10) 
+    ret += "0";
+  ret += String(Minute, HEX) + ":";
+  if (Second < 10)
+    ret += "0";
+  ret += String(Second, HEX);
+  
+  return ret;
+
+}
+
 
 /*
 
